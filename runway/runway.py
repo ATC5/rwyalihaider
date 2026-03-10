@@ -7,7 +7,7 @@ from scipy.integrate import odeint
 # --- 1. إعدادات الصفحة الاحترافية والمتجاوبة ---
 st.set_page_config(page_title="Advanced Runway Simulator", page_icon="✈️", layout="wide", initial_sidebar_state="expanded")
 
-# --- 2. ستايل CSS מתקדמת لتنسيق العربي المتجاوب (Responsive RTL Fix) ---
+# --- 2. ستايل CSS لتنسيق العربي المتجاوب وإصلاح القائمة الجانبية ---
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap');
@@ -19,22 +19,30 @@ st.markdown("""
         text-align: right !important;
     }
     
-    /* إصلاح مشكلة انضغاط النصوص والالتفاف العمودي (حل مشكلة image_9.png) */
-    h1, h2, h3, p, label, .stMarkdown {
-        white-space: normal !important; /* يمنع النصوص من أن تنضغط عمودياً */
-        word-wrap: break-word !important; /* يسمح بالالتفاف العادي */
+    /* إصلاح مشكلة انضغاط النصوص والالتفاف العمودي بالشاشة الرئيسية */
+    .stMarkdown p, h1, h2, h3, label {
+        white-space: normal !important;
+        word-wrap: break-word !important;
     }
 
-    /* تنسيق الكروت الهندسية لتكون متجاوبة (Metric Containers) */
+    /* 🔴🔴 الحل السحري لمشكلة الحروف العمودية في القائمة الجانبية 🔴🔴 */
+    [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] {
+        min-width: 260px !important; /* هذا يمنع النص من الانضغاط عند إغلاق القائمة */
+    }
+    [data-testid="stSidebar"] {
+        overflow-x: hidden !important;
+    }
+
+    /* تنسيق الكروت الهندسية لتكون متجاوبة */
     div[data-testid="metric-container"] {
         background: linear-gradient(145deg, #1e1e2f, #2a2a40);
         border-radius: 12px;
         padding: 15px !important;
         box-shadow: 3px 3px 10px rgba(0,0,0,0.3);
         border-left: 4px solid #00f5d4;
-        width: auto !important; /* يجعل العرض تلقائي */
+        width: auto !important;
         max-width: 100% !important;
-        margin-bottom: 10px; /* مسافة بين الكروت على الموبايل */
+        margin-bottom: 10px;
     }
     
     /* تنسيق النصوص داخل الكروت */
@@ -46,7 +54,7 @@ st.markdown("""
     div[data-testid="metric-container"] div {
         color: #00f5d4 !important;
         font-weight: bold;
-        font-size: 20px !important; /* تكبير بسيط للقيمة لتكون أوضح */
+        font-size: 20px !important;
     }
 
     /* جعل التبويبات متجاوبة وعربية */
@@ -60,7 +68,7 @@ st.markdown("""
         padding: 8px 16px;
     }
     
-    /* تنسيق العنوان الرئيسي ليكون متمركزاً ومتجاوباً */
+    /* تنسيق العنوان الرئيسي */
     .main-header-area {
         text-align: center !important;
         margin-bottom: 25px;
@@ -72,12 +80,12 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# --- 3. تصميم العنوان المعدل (المتجاوب) ---
+# --- 3. تصميم العنوان ---
 st.markdown("""
 <div class='main-header-area'>
     <span style='font-size: 50px;'>🛫</span>
     <h1 style='margin: 0; padding-top: 10px;'>نظام المحاكاة المتقدم لاهتزازات مدارج المطارات</h1>
-    <p style='margin: 0; color: #888;'>Advanced Dynamic Pavement Response Simulator (ADPRS) - V3.1 Fixed</p>
+    <p style='margin: 0; color: #888;'>Advanced Dynamic Pavement Response Simulator (ADPRS) - V3.2 Final</p>
 </div>
 <hr style='border-color: #333; margin: 10px 0;'>
 """, unsafe_allow_html=True)
@@ -114,17 +122,17 @@ with st.sidebar:
     st.success("🟢 النظام متصل وجاهز.")
 
 # --- 6. العمليات الحسابية المتقدمة ---
-t = np.linspace(0, 5, 1000) # تقليل الدقة قليلاً لسرعة الموبايل
+t = np.linspace(0, 5, 1000)
 sol = odeint(runway_model, [0.0, v0], t, args=(m_val, c_val, k_val))
-displacement_mm = sol[:, 0] * 1000 # تحويل إلى مليمتر
+displacement_mm = sol[:, 0] * 1000
 velocity = sol[:, 1]
 
-# حسابات هندسية دقيقة
+# حسابات هندسية
 max_disp_mm = abs(np.min(displacement_mm))
 impact_force_kN = (k_val * (abs(np.min(sol[:, 0])))) / 1000
 damping_ratio = c_val / (2 * np.sqrt(k_val * m_val))
 
-# حساب وقت الاستقرار (Settling Time) - دقة أعلى
+# حساب وقت الاستقرار
 try:
     threshold_mm = 0.05 * max_disp_mm
     settled_indices = np.where(np.abs(displacement_mm) > threshold_mm)[0]
@@ -140,14 +148,11 @@ elif damping_ratio == 1:
 else:
     damping_status = "Overdamped (فوق المخمد)"
 
-# --- 7. التبويبات المتجاوبة (Responsive Tabs) ---
-# استخدام التبويبات لتنظيم الشاشة الضيقة
-tab1, tab2, tab3 = st.tabs(["📊 المؤشرات الفورية", "📈 الرسم البياني (Wave)", "⚙️ المحرك الرياضي"])
+# --- 7. التبويبات المتجاوبة ---
+tab1, tab2, tab3 = st.tabs(["📊 المؤشرات الفورية", "📈 الرسم البياني", "⚙️ المحرك الرياضي"])
 
 with tab1:
-    # --- عرض الـ Dashboards بشكل عمودي متجاوب على الموبايل ---
     st.markdown("### 📋 لوحة المؤشرات الهندسية (KPIs)")
-    # استخدام st.columns بس Streamlit راح ينزلهم تلقائياً جوه بعض على الموبايل
     m1, m2 = st.columns(2)
     with m1:
         st.metric("Max Deflection", f"{max_disp_mm:.2f} mm", "أقصى هبوط للتبليط")
@@ -158,7 +163,6 @@ with tab1:
         
     st.markdown("---")
     st.markdown("### ⚠️ مؤشر الخطر الإنشائي")
-    # الـ Gauge Chart نحطه جوه تبويب لوحده أو نعطيه مساحة كاملة
     fig_gauge = go.Figure(go.Indicator(
         mode = "gauge+number",
         value = max_disp_mm,
@@ -170,9 +174,9 @@ with tab1:
             'borderwidth': 2,
             'bordercolor': "gray",
             'steps': [
-                {'range': [0, 40], 'color': "#00b4d8"}, # آمن
-                {'range': [40, 90], 'color': "#ffb703"}, # تحذير
-                {'range': [90, 150], 'color': "#ef233c"}  # خطر
+                {'range': [0, 40], 'color': "#00b4d8"}, 
+                {'range': [40, 90], 'color': "#ffb703"}, 
+                {'range': [90, 150], 'color': "#ef233c"}  
             ],
             'threshold': {'line': {'color': "red", 'width': 4}, 'thickness': 0.75, 'value': max_disp_mm}
         }
@@ -181,7 +185,7 @@ with tab1:
     st.plotly_chart(fig_gauge, use_container_width=True)
 
 with tab2:
-    st.markdown("### 📈 استجابة الإزاحة الزمنية (Transient Deflection)")
+    st.markdown("### 📈 استجابة الإزاحة الزمنية")
     fig_wave = go.Figure()
     fig_wave.add_trace(go.Scatter(
         x=t, y=displacement_mm,
@@ -191,7 +195,6 @@ with tab2:
         fill='tozeroy',
         fillcolor='rgba(0, 245, 212, 0.1)'
     ))
-    # خط الصفر
     fig_wave.add_hline(y=0, line_dash="dash", line_color="gray", annotation_text="حالة الاستقرار")
     
     fig_wave.update_layout(
@@ -199,7 +202,7 @@ with tab2:
         yaxis_title="الإزاحة (mm)",
         hovermode="x unified",
         template="plotly_dark",
-        height=400, # تقليل الطول قليلاً ليناسب الموبايل
+        height=400,
         margin=dict(l=10, r=10, t=30, b=10)
     )
     st.plotly_chart(fig_wave, use_container_width=True)
@@ -213,7 +216,6 @@ with tab3:
         st.latex(r"\zeta = \frac{c}{2\sqrt{km}}")
     
     st.markdown("---")
-    # زر تصدير البيانات
     df = pd.DataFrame({'Time (s)': t, 'Displacement (mm)': displacement_mm, 'Velocity (m/s)': velocity})
     csv = df.to_csv(index=False).encode('utf-8')
     st.download_button(
@@ -221,15 +223,15 @@ with tab3:
         data=csv,
         file_name='Runway_Simulation_Data.csv',
         mime='text/csv',
-        use_container_width=True # الزر يملأ عرض الموبايل
+        use_container_width=True
     )
 
-# --- حقوق الملكية والتفاصيل الأكاديمية المعدلة ---
+# --- حقوق الملكية والتفاصيل الأكاديمية ---
 st.markdown("---")
 st.markdown("""
 <div style='text-align: center; color: #8a94a6; font-size: 14px; background-color: #1e1e2f; padding: 15px; border-radius: 10px; border: 1px solid #333;'>
     👨‍💻 <b>إعداد وتصميم الطالب:</b> علي حيدر اموري (المرحلة الثالثة)<br>
     🎓 <b>إشراف:</b> د. محمد جواد<br>
-    🏛️ قسم هندسة الملاحة والتوجيه - مادة الاهتزازات © 2024
+    🏛️ قسم هندسة الملاحة والتوجيه - مادة الاهتزازات © 2026
 </div>
 """, unsafe_allow_html=True)
