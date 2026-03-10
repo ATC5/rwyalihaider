@@ -85,7 +85,7 @@ st.markdown("""
 <div class='main-header-area'>
     <span style='font-size: 50px;'>🛫</span>
     <h1 style='margin: 0; padding-top: 10px;'>نظام المحاكاة المتقدم لاهتزازات مدارج المطارات</h1>
-    <p style='margin: 0; color: #888;'>Advanced Dynamic Pavement Response Simulator (ADPRS) - V3.2 Final</p>
+    <p style='margin: 0; color: #888;'>علي حيدر اموري</p>
 </div>
 <hr style='border-color: #333; margin: 10px 0;'>
 """, unsafe_allow_html=True)
@@ -235,3 +235,4 @@ st.markdown("""
     🏛️ قسم هندسة الملاحة والتوجيه - مادة الاهتزازات © 2026
 </div>
 """, unsafe_allow_html=True)
+
